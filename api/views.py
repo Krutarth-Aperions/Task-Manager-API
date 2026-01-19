@@ -1,11 +1,12 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied
+from django_filters.rest_framework import DjangoFilterBackend
 
 from workspace.serializers import ProjectSerializer, TaskSerializer, CustomToken
 from workspace.models import Project, Task
 from workspace.permissions import IsSuperAdmin, IsOwnerOrMember, IsYourTask
-from workspace.filters import DueDateFilter, ProjectFilter
+from workspace.filters import TaskFilter, ProjectFilter
 
 from rest_framework import generics
 from rest_framework.views import APIView
@@ -22,18 +23,20 @@ class ProjectView(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer
 
     def get_queryset(self):
-        return Project.objects.filter(Q(owner=self.request.user) | Q(members=self.request.user))
+        return Project.objects.filter(Q(owner=self.request.user) | Q(members=self.request.user)).distinct()
     
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwnerOrMember]
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     lookup_field = 'pk'
+    
 
 # ------------------------------------------------------------------- Tasks
 class TaskView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsYourTask]
-    filterset_class = DueDateFilter
+    filterset_class = TaskFilter
+    filter_backends = [DjangoFilterBackend]
     filterset_fields = ['completed', 'due_date']
     serializer_class = TaskSerializer
 
@@ -58,6 +61,20 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     lookup_field = 'pk'
+
+    def perform_update(self, serializer):
+        project = serializer.validated_data['project']
+        user = self.request.user
+
+        if not (
+            user.is_superuser or
+            project.owner == user or
+            user in project.members.all()
+        ):
+            raise PermissionDenied({"error": "You cannot add task to this project"})
+
+        serializer.save()
+
     
 class TaskCompleteView(APIView):
     permission_classes = [IsAuthenticated, IsYourTask]

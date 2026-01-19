@@ -4,9 +4,10 @@ from .models import Project, Task
 
 class TaskSerializer(serializers.ModelSerializer):
     due_date = serializers.DateField()
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
     class Meta:
         model = Task
-        fields = ['id', 'title', 'details', 'completed', 'due_date', 'created_at', 'project']
+        fields = ['id', 'title', 'details', 'due_date', 'completed', 'flag', 'created_at', 'project', 'created_by']
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.CharField(default=serializers.CurrentUserDefault())

@@ -4,8 +4,10 @@ from workspace.models import Task, User, Project
 class IsYourTask(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser: return True
+        if request.user in obj.project.members.all():
+            if obj.created_by == request.user: return True
         if request.method in SAFE_METHODS:
-            return obj.project.owner.pk == request.user.pk or request.user in obj.project.members.all()
+            return obj.project.owner.pk == request.user.pk or request.user in obj.project.members.all() 
         return obj.project.owner.pk == request.user.pk
     
 class IsOwnerOrMember(BasePermission):

@@ -20,13 +20,16 @@ class Task(models.Model):
     details = models.TextField(blank=True, null=True)
     due_date = models.DateField(blank=True, null=True)
     completed = models.BooleanField(default=False)
+    flag = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
 
-    @property
-    def flag(self):
+    def save(self, *args, **kwargs):
         if self.due_date:
-            return self.due_date <= (timezone.now().date() + timedelta(days=1))
-        return False
+            if self.due_date <= (timezone.now().date() + timedelta(days=1)):
+                self.flag = True
+            else: self.flag = False
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

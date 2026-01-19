@@ -8,9 +8,9 @@ class ProjectFilter(django_filters.FilterSet):
         model = Project
         fields = ['project']
 
-class DueDateFilter(django_filters.FilterSet):
+class TaskFilter(django_filters.FilterSet):
     due_date = django_filters.DateFilter(field_name="due_date", lookup_expr='exact')
-
+    completed = django_filters.BooleanFilter(field_name="completed",)
     class Meta:
         model = Task
-        fields = ['due_date']
+        fields = ['due_date', 'completed']
