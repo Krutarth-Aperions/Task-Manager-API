@@ -9,7 +9,7 @@ class Project(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    members = models.ManyToManyField(User, related_name='projects')
+    members = models.ManyToManyField(User, related_name='projects', null=True, blank=True)
 
     def __str__(self):
         return self.name
